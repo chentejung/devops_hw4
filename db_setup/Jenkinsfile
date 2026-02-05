@@ -21,7 +21,7 @@ stage('Verify Health') {
                 echo "MySQL is alive!"
                 exit 0
             fi
-            echo "MySQL is still booting up... (Attempt $i/10)"
+            echo "MySQL is still booting up... (Attempt \$i/10)"
             sleep 5
         done
         echo "MySQL failed to start."
