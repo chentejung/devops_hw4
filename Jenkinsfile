@@ -23,7 +23,6 @@ pipeline {
         stage('DB_setup') {
             steps {
                 script {
-                    // Load the setup script
                     def setup = load "${env.FOLDER1}/Jenkinsfile"
                 }
             }
@@ -32,7 +31,6 @@ pipeline {
         stage('Import_data') {
             steps {
                 script {
-                    // Load the import script
                     def importer = load "${env.FOLDER2}/Jenkinsfile"
                 }
             }
@@ -41,8 +39,23 @@ pipeline {
         stage('Web_setup') {
             steps {
                 script {
-                    // Load the verification script
                     def verify = load "${env.FOLDER3}/Jenkinsfile"
+                }
+            }
+        }
+        stage('E2E Testing') {
+            steps {
+                echo 'Running Selenium Tests...'
+                dir('tests/e2e') {
+                    sh 'pip install -r requirements.txt'
+                    sh 'pytest test_user_workflow.py --html=report.html --self-contained-html'
+                }
+            }
+            post {
+                always {
+                    // Archive the HTML report so it's viewable in Jenkins
+                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: true, 
+                        reportDir: '.', reportFiles: 'report.html', reportName: 'E2E Report'])
                 }
             }
         }
