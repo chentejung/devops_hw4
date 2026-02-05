@@ -15,7 +15,7 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get('http://your-app-url.com/api/resource');
+  const res = http.get('http://192.168.30.17:5000/filter/cuisine?type=American');
   check(res, { 'status was 200': (r) => r.status == 200 });
   sleep(1);
 }
