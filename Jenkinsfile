@@ -17,7 +17,6 @@ pipeline {
         FOLDER3         = 'web_setup'
         SONAR_SERVER_URL = "http://localhost:9000"
         SONAR_TOKEN      = credentials('7f94b206-0044-4e6f-a11c-f9c07471db31') // Create this in Jenkins Credentials
-        DOCKER_BIN      = '/usr/bin/docker'
     }
 
     stages {

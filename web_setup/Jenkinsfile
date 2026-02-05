@@ -5,7 +5,7 @@ stage('Clean Workspace') {
 }
 
 stage('Setup Network') {
-    sh "$DOCKER_BIN network create ${env.NETWORK_NAME} || true"
+    sh "docker network create ${env.NETWORK_NAME} || true"
 }
 
 stage('Generate Build Files') {
@@ -57,7 +57,7 @@ stage('SonarQube Analysis') {
     script {
         // This block requires the SonarQube Scanner Plugin
         withSonarQubeEnv('My SonarQube Server') { 
-            sh "$DOCKER_BIN run --rm -v \$(pwd):/usr/src ..."
+            sh "docker run --rm -v \$(pwd):/usr/src ..."
         }
     }
 }
@@ -65,7 +65,7 @@ stage('SonarQube Analysis') {
 stage('SonarQube Analysis') {
     echo "Starting SonarQube Scan..."
     sh """
-        $DOCKER_BIN run --rm \
+        docker run --rm \
             -e SONAR_HOST_URL=${env.SONAR_SERVER_URL} \
             -e SONAR_LOGIN=${env.SONAR_TOKEN} \
             -v "\$(pwd):/usr/src" \
@@ -79,9 +79,9 @@ stage('SonarQube Analysis') {
 
 stage('Build & Deploy') {
     sh """
-        $DOCKER_BIN build -t ${env.IMAGE_NAME}:latest .
-        $DOCKER_BIN rm -f ${env.CONTAINER_NAME} || true
-        $DOCKER_BIN run -d --name ${env.CONTAINER_NAME} \
+        docker build -t ${env.IMAGE_NAME}:latest .
+        docker rm -f ${env.CONTAINER_NAME} || true
+        docker run -d --name ${env.CONTAINER_NAME} \
             --network ${env.NETWORK_NAME} \
             -e MYSQL_PW=${env.MYSQL_PW} \
             -p 5000:5000 ${env.IMAGE_NAME}:latest
