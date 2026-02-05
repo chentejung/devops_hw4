@@ -65,7 +65,7 @@ stage('SonarQube Analysis') {
                 sonarsource/sonar-scanner-cli \
                 -Dsonar.projectKey=flask-restaurant-api \
                 -Dsonar.sources=. \
-                -Dsonar.host.url=$SONAR_CONFIG_URL \
+                -Dsonar.host.url=$SONAR_HOST_URL \
                 -Dsonar.login=$SONAR_AUTH_TOKEN \
                 -Dsonar.python.version=3 \
                 -Dsonar.exclusions=**/tests/**
