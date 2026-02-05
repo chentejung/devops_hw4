@@ -1,0 +1,75 @@
+// No 'pipeline' header here. This script executes on the agent defined in the root job.
+
+stage('Prepare Data') {
+    script {
+        // Files uploaded via parameters appear in the workspace root of the agent
+        if (!fileExists('Chicago_Restaurant_Data.csv')) {
+            echo "No file uploaded. Generating sample CSV data..."
+            def csvContent = """id,name,address,cuisine_type,avg_price,review_score,founded_year,neighborhood
+1,Daley's Restaurant,6246 S Cottage Grove Ave,American/Diner,\$,4.4,1892,Woodlawn
+2,The Walnut Room,111 N State St,American,\$\$,4.3,1905,The Loop
+3,Pompei,1531 W Taylor St,Italian,\$,4.5,1909,Little Italy
+""" // ... (rest of your CSV data)
+            writeFile file: 'Chicago_Restaurant_Data.csv', text: csvContent
+        }
+    }
+}
+
+stage('Initialize & Import') {
+    echo "Running import on agent: ${env.NODE_NAME}"
+    // Note: We use local docker commands because the agent is already ON the target server
+    sh """
+        set -e
+        echo "1. Copy CSV into container"
+        docker cp Chicago_Restaurant_Data.csv ${env.CONTAINER_NAME}:/var/lib/mysql-files/Chicago_Restaurant_Data.csv
+
+        echo "2. Create database and table"
+        docker exec -i -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} mysql -u root <<'SQL'
+            CREATE DATABASE IF NOT EXISTS ${env.DB_NAME};
+            USE ${env.DB_NAME};
+            DROP TABLE IF EXISTS restaurants;
+            CREATE TABLE restaurants (
+                id INT NOT NULL,
+                name VARCHAR(255),
+                address VARCHAR(255),
+                cuisine_type VARCHAR(100),
+                avg_price VARCHAR(100),
+                review_score FLOAT,
+                founded_year INT,
+                neighborhood VARCHAR(100),
+                PRIMARY KEY (id)
+            );
+
+            LOAD DATA INFILE '/var/lib/mysql-files/Chicago_Restaurant_Data.csv'
+            INTO TABLE restaurants
+            FIELDS TERMINATED BY ','
+            OPTIONALLY ENCLOSED BY '\"'
+            LINES TERMINATED BY '\n'
+            IGNORE 1 ROWS;
+SQL
+    """
+}
+
+stage('Verify Data Integrity') {
+    sh """
+        set -e
+        echo "Calculating CSV record count..."
+        CSV_LINES=\$(wc -l < Chicago_Restaurant_Data.csv)
+        EXPECTED_COUNT=\$((CSV_LINES - 1))
+
+        echo "Querying Database record count..."
+        ACTUAL_COUNT=\$(docker exec -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} \
+            mysql -u root "${env.DB_NAME}" -N -s -e "SELECT COUNT(*) FROM restaurants;")
+
+        echo "Results: Expected (CSV): \$EXPECTED_COUNT | Actual (DB): \$ACTUAL_COUNT"
+
+        if [ "\$EXPECTED_COUNT" -eq "\$ACTUAL_COUNT" ]; then
+            echo "SUCCESS: Database count matches."
+        else
+            echo "ERROR: Count mismatch!"
+            exit 1
+        fi
+    """
+}
+
+return this; // Required for 'load' to return the script object

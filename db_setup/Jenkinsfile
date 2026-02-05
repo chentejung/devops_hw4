@@ -1,0 +1,18 @@
+// No 'pipeline' header here if using 'load'
+stage('Deploy MySQL') {
+    echo "Running deployment on agent: ${env.NODE_NAME}"
+    sh """
+        docker network create ${NETWORK_NAME} || true
+        docker rm -f ${CONTAINER_NAME} || true
+        docker run -d --name ${CONTAINER_NAME} \
+            --network ${NETWORK_NAME} \
+            -e MYSQL_ROOT_PASSWORD=${MYSQL_PW} \
+            ${BASE_IMAGE}
+    """
+}
+
+stage('DB Health Check') {
+    sh "docker exec ${CONTAINER_NAME} mysqladmin ping -p${MYSQL_PW}"
+}
+
+return this; // Crucial for 'load' to work correctly
