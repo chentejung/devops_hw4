@@ -47,8 +47,9 @@ pipeline {
             steps {
                 echo 'Running Selenium Tests...'
                 dir('tests/e2e') {
-                    sh 'python3 -m venv venv'
-                    sh 'source venv/bin/activate'
+                    sh 'curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py'
+                    sh 'python3 get-pip.py --user'
+                    sh 'export PATH=$PATH:~/.local/bin'
                     sh 'python3 -m pip install -r requirements.txt'
                     sh 'python3 -m pytest test_user_workflow.py --html=report.html --self-contained-html'
                 }
