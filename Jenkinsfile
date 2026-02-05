@@ -50,6 +50,10 @@ pipeline {
                     sh 'curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py'
                     sh 'python3 get-pip.py --user'
                     sh 'export PATH=$PATH:~/.local/bin'
+                    sh 'wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
+                    sh 'sudo apt update'
+                    sh 'sudo apt install -y ./google-chrome-stable_current_amd64.deb'
+                    sh 'rm google-chrome-stable_current_amd64.deb'
                     sh 'python3 -m pip install -r requirements.txt'
                     sh 'python3 -m pytest test_user_workflow.py --html=report.html --self-contained-html'
                 }
