@@ -62,16 +62,15 @@ pipeline {
             }
         }
         stage('Performance Testing') {
-            steps {
-                script {
-                    // Run k6 and output results to a file
-                    // The exit code will be non-zero if thresholds are failed
+            agent {
+                    docker { image 'grafana/k6:latest' }
+                }
+                steps {
                     sh 'k6 run load-test.js'
                 }
             }
             post {
                 always {
-                    // Archive the results if you generated a JSON/CSV report
                     archiveArtifacts artifacts: 'results.json', fingerprint: true
                 }
             }
