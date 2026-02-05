@@ -17,14 +17,14 @@ stage('Prepare Data') {
 
 stage('Initialize & Import') {
     echo "Running import on agent: ${env.NODE_NAME}"
-    // Note: We use local docker commands because the agent is already ON the target server
+    // Note: We use local $DOCKER_BIN commands because the agent is already ON the target server
     sh """
         set -e
         echo "1. Copy CSV into container"
-        docker cp Chicago_Restaurant_Data.csv ${env.CONTAINER_NAME}:/var/lib/mysql-files/Chicago_Restaurant_Data.csv
+        $DOCKER_BIN cp Chicago_Restaurant_Data.csv ${env.CONTAINER_NAME}:/var/lib/mysql-files/Chicago_Restaurant_Data.csv
 
         echo "2. Create database and table"
-        docker exec -i -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} mysql -u root <<'SQL'
+        $DOCKER_BIN exec -i -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} mysql -u root <<'SQL'
             CREATE DATABASE IF NOT EXISTS ${env.DB_NAME};
             USE ${env.DB_NAME};
             DROP TABLE IF EXISTS restaurants;
@@ -58,7 +58,7 @@ stage('Verify Data Integrity') {
         EXPECTED_COUNT=\$((CSV_LINES - 1))
 
         echo "Querying Database record count..."
-        ACTUAL_COUNT=\$(docker exec -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} \
+        ACTUAL_COUNT=\$($DOCKER_BIN exec -e MYSQL_PWD="${env.MYSQL_PW}" ${env.CONTAINER_NAME} \
             mysql -u root "${env.DB_NAME}" -N -s -e "SELECT COUNT(*) FROM restaurants;")
 
         echo "Results: Expected (CSV): \$EXPECTED_COUNT | Actual (DB): \$ACTUAL_COUNT"
