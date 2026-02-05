@@ -3,8 +3,8 @@ stage('Deploy MySQL') {
     echo "Running deployment on agent: ${env.NODE_NAME}"
     sh """
         docker network create ${NETWORK_NAME} || true
-        docker rm -f ${CONTAINER_NAME} || true
-        docker run -d --name ${CONTAINER_NAME} \
+        docker rm -f ${DB_CONTAINER_NAME} || true
+        docker run -d --name ${DB_CONTAINER_NAME} \
             --network ${NETWORK_NAME} \
             -p 3306:3306 \
             -e MYSQL_ROOT_PASSWORD=${MYSQL_PW} \
@@ -17,7 +17,7 @@ stage('Verify Health') {
         echo "Waiting for MySQL to start..."
         # Try 10 times, waiting 5 seconds between each
         for i in {1..10}; do
-            if docker exec -e MYSQL_PWD=$MYSQL_PW $CONTAINER_NAME mysqladmin ping -h localhost; then
+            if docker exec -e MYSQL_PWD=$MYSQL_PW $DB_CONTAINER_NAME mysqladmin ping -h localhost; then
                 echo "MySQL is alive!"
                 exit 0
             fi
@@ -25,7 +25,7 @@ stage('Verify Health') {
             sleep 5
         done
         echo "MySQL failed to start."
-        docker logs $CONTAINER_NAME
+        docker logs $DB_CONTAINER_NAME
         exit 1
     """
 }

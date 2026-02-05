@@ -9,7 +9,8 @@ pipeline {
     environment {
         MYSQL_PW        = credentials('mysql-root-pw')
         DB_NAME         = 'restaurant_db'
-        CONTAINER_NAME  = 'my-mysql-db'
+        DB_CONTAINER_NAME  = 'my-mysql-db'
+        WEB_CONTAINER_NAME = 'web-restaurant'
         NETWORK_NAME    = 'restaurant_net'
         BASE_IMAGE      = 'mysql:8.0'
         FOLDER1         = 'db_setup'
