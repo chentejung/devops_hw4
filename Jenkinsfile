@@ -74,6 +74,5 @@ pipeline {
                     archiveArtifacts artifacts: 'results.json', fingerprint: true
                 }
             }
-        }
     }
 }
