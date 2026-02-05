@@ -1,0 +1,91 @@
+// No 'pipeline' header. Executes on the target-server-agent.
+
+stage('Setup Network') {
+    sh "docker network create ${env.NETWORK_NAME} || true"
+}
+
+stage('Generate Build Files') {
+    writeFile file: 'requirements.txt', text: "flask\nflask_sqlalchemy\npymysql\ncryptography\nmysql-connector-python==8.0.33"
+    writeFile file: 'Dockerfile', text: """
+FROM python:3.11 AS builder
+WORKDIR /app
+COPY requirements.txt ./
+RUN apt-get update && apt-get install -y build-essential libffi-dev libssl-dev
+RUN pip install --prefix=/install -r requirements.txt
+
+FROM python:3.11-alpine
+WORKDIR /app
+RUN apk add --no-cache libstdc++ libpq libffi libssl3
+COPY --from=builder /install /usr/local
+COPY app.py ./
+EXPOSE 5000
+CMD [ "python", "./app.py" ]
+"""
+    writeFile file: 'app.py', text: """from flask import Flask, request, jsonify
+import mysql.connector
+import os
+
+app = Flask(__name__)
+
+def get_db_connection():
+    return mysql.connector.connect(
+        host="my-mysql-db",
+        user="root",
+        password=os.getenv("MYSQL_PW"),
+        database="restaurant_db",
+    )
+@app.route("/filter/cuisine")
+def filter_by_cuisine():
+    cuisine = request.args.get("type")
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM restaurants WHERE cuisine_type = %s", (cuisine,))
+    results = cursor.fetchall()
+    conn.close()
+    return jsonify(results)
+
+@app.route("/filter/neighborhood")
+def filter_by_neighborhood():
+    neighborhood = request.args.get("neighborhood")
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM restaurants WHERE neighborhood = %s", (neighborhood,))
+    results = cursor.fetchall()
+    conn.close()
+    return jsonify(results)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+"""
+}
+stage('SonarQube Analysis') {
+    // 'My SonarQube Server' must match your Global Tool Config name exactly
+    withSonarQubeEnv('sonarQube') { 
+        echo "Starting SonarQube Scan via Plugin Environment..."
+        sh '''
+            docker run --rm \
+                -e SONAR_HOST_URL=$SONAR_HOST_URL \
+                -e SONAR_AUTH_TOKEN=$SONAR_AUTH_TOKEN \
+                -v "$(pwd):/usr/src" \
+                sonarsource/sonar-scanner-cli \
+                -Dsonar.projectKey=flask-restaurant-api \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=$SONAR_HOST_URL \
+                -Dsonar.login=$SONAR_AUTH_TOKEN \
+                -Dsonar.python.version=3 \
+                -Dsonar.exclusions=**/tests/**
+        '''
+    }
+}
+stage('Build & Deploy') {
+    sh """
+        docker build -t ${env.IMAGE_NAME}:latest .
+        docker rm -f ${env.WEB_CONTAINER_NAME} || true
+        docker run -d --name ${env.WEB_CONTAINER_NAME} \
+            --network ${env.NETWORK_NAME} \
+            -e MYSQL_PW=${env.MYSQL_PW} \
+            -p 5000:5000 ${env.IMAGE_NAME}:latest
+    """
+}
+
+return this;
