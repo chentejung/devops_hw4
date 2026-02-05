@@ -65,9 +65,7 @@ pipeline {
             steps {
                     sh 'curl -L https://github.com/grafana/k6/releases/download/v0.49.0/k6-v0.49.0-linux-amd64.tar.gz -o k6.tar.gz'
                     sh 'tar -xvzf k6.tar.gz'
-                    sh 'sudo mv k6-v0.49.0-linux-amd64/k6 /usr/local/bin/'
-                    sh 'rm -rf k6.tar.gz k6-v0.49.0-linux-amd64'
-                    sh 'k6 run load-test.js'
+                    sh './k6-v0.49.0-linux-amd64/k6 run load-test.js'
                 }
             post {
                 always {
