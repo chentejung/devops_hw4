@@ -12,7 +12,7 @@ stage('Deploy MySQL') {
 }
 
 stage('DB Health Check') {
-    sh "docker exec ${CONTAINER_NAME} mysqladmin ping -p${MYSQL_PW}"
+    sh "docker exec ${CONTAINER_NAME} mysqladmin ping -h 127.0.0.1 -p${MYSQL_PW}"
 }
 
 return this; // Crucial for 'load' to work correctly
