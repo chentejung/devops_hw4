@@ -54,23 +54,20 @@ if __name__ == "__main__":
 """
 }
 stage('SonarQube Analysis') {
-    agent { label 'docker-v1' } // Run on your target agent
-    steps {
-        // 'My SonarQube Server' must match your Global Tool Config name exactly
-        withSonarQubeEnv('sonarQube') { 
-            echo "Starting SonarQube Scan via Plugin Environment..."
-            sh '''
-                docker run --rm \
-                    -e SONAR_HOST_URL=$SONAR_CONFIG_URL \
-                    -e SONAR_AUTH_TOKEN=$SONAR_AUTH_TOKEN \
-                    -v "$(pwd):/usr/src" \
-                    sonarsource/sonar-scanner-cli \
-                    -Dsonar.projectKey=flask-restaurant-api \
-                    -Dsonar.sources=. \
-                    -Dsonar.python.version=3 \
-                    -Dsonar.exclusions=**/tests/**
-            '''
-        }
+    // 'My SonarQube Server' must match your Global Tool Config name exactly
+    withSonarQubeEnv('sonarQube') { 
+        echo "Starting SonarQube Scan via Plugin Environment..."
+        sh '''
+            docker run --rm \
+                -e SONAR_HOST_URL=$SONAR_CONFIG_URL \
+                -e SONAR_AUTH_TOKEN=$SONAR_AUTH_TOKEN \
+                -v "$(pwd):/usr/src" \
+                sonarsource/sonar-scanner-cli \
+                -Dsonar.projectKey=flask-restaurant-api \
+                -Dsonar.sources=. \
+                -Dsonar.python.version=3 \
+                -Dsonar.exclusions=**/tests/**
+        '''
     }
 }
 stage('Build & Deploy') {
