@@ -13,23 +13,21 @@ stage('Deploy MySQL') {
 }
 
 stage('Verify Health') {
-    steps {
-        sh """
-            echo "Waiting for MySQL to start..."
-            # Try 10 times, waiting 5 seconds between each
-            for i in {1..10}; do
-                if docker exec -e MYSQL_PWD=$MYSQL_PW $CONTAINER_NAME mysqladmin ping -h localhost; then
-                    echo "MySQL is alive!"
-                    exit 0
-                fi
-                echo "MySQL is still booting up... (Attempt $i/10)"
-                sleep 5
-            done
-            echo "MySQL failed to start."
-            docker logs $CONTAINER_NAME
-            exit 1
-        """
-    }
+    sh """
+        echo "Waiting for MySQL to start..."
+        # Try 10 times, waiting 5 seconds between each
+        for i in {1..10}; do
+            if docker exec -e MYSQL_PWD=$MYSQL_PW $CONTAINER_NAME mysqladmin ping -h localhost; then
+                echo "MySQL is alive!"
+                exit 0
+            fi
+            echo "MySQL is still booting up... (Attempt $i/10)"
+            sleep 5
+        done
+        echo "MySQL failed to start."
+        docker logs $CONTAINER_NAME
+        exit 1
+    """
 }
 
 return this; // Crucial for 'load' to work correctly
