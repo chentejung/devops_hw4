@@ -47,8 +47,8 @@ pipeline {
             steps {
                 echo 'Running Selenium Tests...'
                 dir('tests/e2e') {
-                    sh 'pip install -r requirements.txt'
-                    sh 'pytest test_user_workflow.py --html=report.html --self-contained-html'
+                    sh 'python3 -m pip install -r requirements.txt'
+                    sh 'python3 -m pytest test_user_workflow.py --html=report.html --self-contained-html'
                 }
             }
             post {
