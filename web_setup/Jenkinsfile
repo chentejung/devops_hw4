@@ -1,9 +1,5 @@
 // No 'pipeline' header. Executes on the target-server-agent.
 
-stage('Clean Workspace') {
-    cleanWs() 
-}
-
 stage('Setup Network') {
     sh "docker network create ${env.NETWORK_NAME} || true"
 }
@@ -38,6 +34,15 @@ def get_db_connection():
         password=os.getenv("MYSQL_PW"),
         database="restaurant_db",
     )
+@app.route("/filter/cuisine")
+def filter_by_cuisine():
+    cuisine = request.args.get("type")
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM restaurants WHERE cuisine_type = %s", (cuisine,))
+    results = cursor.fetchall()
+    conn.close()
+    return jsonify(results)
 
 @app.route("/filter/neighborhood")
 def filter_by_neighborhood():
