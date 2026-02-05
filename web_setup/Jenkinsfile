@@ -64,7 +64,7 @@ stage('SonarQube Analysis') {
         echo "Starting SonarQube Scan via Plugin Environment..."
         sh '''
             docker run --rm \
-                -e SONAR_HOST_URL=$SONAR_CONFIG_URL \
+                -e SONAR_HOST_URL=$SONAR_HOST_URL \
                 -e SONAR_AUTH_TOKEN=$SONAR_AUTH_TOKEN \
                 -v "$(pwd):/usr/src" \
                 sonarsource/sonar-scanner-cli \
