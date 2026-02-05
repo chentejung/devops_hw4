@@ -68,11 +68,11 @@ pipeline {
                 steps {
                     sh 'k6 run load-test.js'
                 }
-            }
             post {
                 always {
                     archiveArtifacts artifacts: 'results.json', fingerprint: true
                 }
+            }
             }
     }
 }
